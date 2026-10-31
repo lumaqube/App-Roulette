@@ -1,16 +1,19 @@
 # Roulette
 
-A playful theme roulette for Q-Booth events. Guests spin a wheel made of the running event's
-templates (with their covers); the winner is selected in Q-Booth through its **Local API** and the
-photo session starts with it.
+A playful theme roulette for events running in the booth app. Guests spin a wheel made of the
+running event's templates (with their covers); the winner is selected in the booth app through its
+**Local API** and the photo session starts with it.
+
+Works with every brand build of the booth app: **QBooth.exe**, **BleepShare.exe**, **XBooth.exe**;
+the name shown to guests comes from the connected app (see Brands).
 
 - Wheel segments = the running event's guest-pickable templates (`GET templates`). Up to
   `maxSegments` (16) per wheel: with more templates, each guest gets a fresh random set; with few,
   they repeat so the wheel stays full. The pick is random (`crypto.getRandomValues`).
 - The card beside the wheel shows the template under the pointer, live while it spins.
 - Win: fanfare, confetti, the "Your theme!" card, **Let's go!** (auto after `autoGoSec`, 8 s) and
-  **Spin again** (`respins`, 1). Then `template/select {id}`: from Welcome Q-Booth skips its pickers
-  but keeps its gates (Start PIN, payment). From a picker the app sends `session/end` first.
+  **Spin again** (`respins`, 1). Then `template/select {id}`: from Welcome the booth app skips its
+  pickers but keeps its gates (Start PIN, payment). From a picker the app sends `session/end` first.
 - Layout fits any screen: landscape (wheel left, title + card + buttons right), portrait (title,
   wheel, card + buttons), short screens put the card beside the buttons. Sizes come from the
   window's width and height (`layout()` in public/app.js).
@@ -35,23 +38,23 @@ brand of its own (app, window and exe are just "Roulette"):
 
 ## Covers
 
-The Local API has no images. The covers are read (read only) from Q-Booth's own event folder on
-this PC: `<qboothDir>\events\<eventId>\event.json` → `templates[].cover`, or else the template
+The Local API has no images. The covers are read (read only) from the booth app's own event folder
+on this PC: `<qboothDir>\events\<eventId>\event.json` → `templates[].cover`, or else the template
 file's own preview (`event_info.preview_image[0]`). A booth on another PC (Allow LAN): coloured
 placeholders with the first letter instead.
 
 ## The window
 
-- **Overlay** (`overlay: true`, default): a full-screen window on top of Q-Booth's event screen,
-  shown only while Q-Booth waits for a pick (Welcome / category or template picker) with no dialog
-  of its own on screen. After the hand-over Q-Booth moves to the camera and the roulette hides; it
-  comes back on Welcome. Connected but no event running = hidden (the operator sees Q-Booth).
-- **Handing the screen back** (`electron/winfront.js`): when the wheel hides, Q-Booth's event
-  window (QBooth.exe's biggest visible window that is not "QBooth - Version …") is brought to the
-  front first; when the wheel comes back, its own window is. Q-Booth's kiosk window is only
-  topmost when the event blocks Alt-Tab, so without this a window the operator had switched to
-  would show instead. One PowerShell process with user32 calls stays open for it.
-- **Not connected yet** (Q-Booth off, Local API off, wrong password): a normal window in the middle
+- **Overlay** (`overlay: true`, default): a full-screen window on top of the booth app's event
+  screen, shown only while it waits for a pick (Welcome / category or template picker) with no dialog
+  of its own on screen. After the hand-over the booth app moves to the camera and the roulette
+  hides; it comes back on Welcome. Connected but no event running = hidden (the operator sees the booth app).
+- **Handing the screen back** (`electron/winfront.js`): when the wheel hides, the booth app's
+  event window (its biggest visible window that is not the main "<Brand> - Version …" window) is
+  brought to the front first; when the wheel comes back, its own window is. The booth app's kiosk
+  window is only topmost when the event blocks Alt-Tab, so without this a window the operator had
+  switched to would show instead. One PowerShell process with user32 calls stays open for it.
+- **Not connected yet** (booth app off, Local API off, wrong password): a normal window in the middle
   of the screen (not on top) says what is wrong, with a Settings button. First start without a
   `config.json` lands here.
 - A **tray icon** (by the clock) shows the status and has Settings / Hide-show / Quit. Opening the
@@ -67,10 +70,10 @@ placeholders with the first letter instead.
 
 ## Run
 
-- `npm install`, then `npm run app` (`npm run app:mock` = with a built-in fake Q-Booth).
+- `npm install`, then `npm run app` (`npm run app:mock` = with a built-in fake booth app).
 - `node server.js [--mock]` serves the page alone on http://127.0.0.1:3930 (browser test).
 - `npm run build` → `dist\Roulette-win32-x64\Roulette.exe`.
-- Q-Booth: Settings → Advanced → Local API (Expert mode): on, note port and password; put them in
+- In the booth app: Settings → Advanced → Local API (Expert mode): on, note port and password; put them in
   the roulette's settings (Test connection).
 - Mock with real covers: `"mock": true, "mockEvent": "<an event id from C:\QBoothPro\events>"`.
 
@@ -79,11 +82,11 @@ placeholders with the first letter instead.
 | Key | Default | Meaning |
 |---|---|---|
 | `port` | 3930 | page server (the mock booth uses 8749) |
-| `qbooth.host / port / password` | 127.0.0.1 / 8730 / "" | Q-Booth Local API |
+| `qbooth.host / port / password` | 127.0.0.1 / 8730 / "" | the booth app's Local API |
 | `qboothDir` | "" | the booth app folder for covers; empty = found automatically |
 | `brandName` | "" | the brand shown to guests; empty = the name the booth app reports |
 | `language`, `title` | en, "" | texts; own title (empty = "Spin the Wheel!") |
-| `overlay`, `display` | true, 0 | overlay on Q-Booth or a normal window; which screen |
+| `overlay`, `display` | true, 0 | overlay on the booth app or a normal window; which screen |
 | `autoGoSec`, `respins`, `maxSegments` | 8, 1, 16 | auto "Let's go" (0 = wait for a tap); spins again; wheel size |
 | `bgmVolume`, `sfxVolume` | 60, 80 | 0-100 |
 | `menuButton`, `menuCorner` | false, top-right | the always-on-top ☰ button and its corner |
@@ -96,11 +99,11 @@ placeholders with the first letter instead.
 
 | | |
 |---|---|
-| `electron/main.js` | Window (overlay / normal), show / hide with Q-Booth's page, shortcuts |
+| `electron/main.js` | Window (overlay / normal), show / hide with the booth app's page, shortcuts |
 | `server.js` | Polls the Local API, `/state`, `/cover/<id>`, `/spin/go`, settings |
 | `covers.js` | Reads covers from the event folder (read only) |
 | `mock-qbooth.js` | Fake Local API that plays a whole session by itself |
-| `public/app.js` | Layout, states (idle / spin / won / handing / away), input, Q-Booth state |
+| `public/app.js` | Layout, states (idle / spin / won / handing / away), input, booth app state |
 | `public/wheel.js` | Canvas wheel: segments, covers, labels, rim bulbs, hub |
 | `public/audio.js` | All music and sounds (Web Audio) |
 | `public/fx.js` | Confetti and sparkles |
