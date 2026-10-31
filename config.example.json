@@ -1,0 +1,26 @@
+{
+  "port": 3930,
+  "qbooth": {
+    "host": "127.0.0.1",
+    "port": 8730,
+    "password": ""
+  },
+  "qboothDir": "",
+  "brandName": "",
+  "language": "en",
+  "title": "",
+  "overlay": true,
+  "display": 0,
+  "autoGoSec": 8,
+  "respins": 1,
+  "maxSegments": 16,
+  "bgmVolume": 60,
+  "sfxVolume": 80,
+  "menuButton": false,
+  "menuCorner": "top-right",
+  "settingsPin": "",
+  "pollMs": 400,
+  "mock": false,
+  "mockEvent": "",
+  "mockBrand": "QBooth"
+}

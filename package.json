@@ -1,0 +1,19 @@
+{
+  "name": "app-roulette",
+  "version": "0.1.0",
+  "description": "Theme roulette for the booth app (QBooth / BleepShare / XBooth): guests spin a wheel of the running event's templates; the winner is selected through the booth app's Local API",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "mock": "node server.js --mock",
+    "app": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "app:mock": "set ELECTRON_RUN_AS_NODE=&& electron . --mock",
+    "build": "electron-packager . \"Roulette\" --platform=win32 --arch=x64 --out=dist --overwrite --no-asar --icon=public/icon.ico --ignore=\"^[\\/](dist|logs|config.json)([\\/]|$)\""
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^45.1.0"
+  },
+  "main": "electron/main.js"
+}

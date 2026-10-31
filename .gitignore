@@ -1,0 +1,5 @@
+# Secrets and local state
+config.json
+logs/
+node_modules/
+dist/

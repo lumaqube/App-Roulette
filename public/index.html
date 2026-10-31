@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'">
+
+  <title>Roulette</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="bg"><div id="rays"></div></div>
+  <canvas id="fx"></canvas>
+
+  <h1 id="title"><span id="titleText"></span><small id="subtitle"></small></h1>
+
+  <div id="wheelBox">
+    <canvas id="wheel"></canvas>
+    <button id="hub" type="button"></button>
+    <svg id="pointer" viewBox="0 0 100 120" aria-hidden="true">
+      <defs>
+        <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ff5d7a" /><stop offset="1" stop-color="#c9123a" />
+        </linearGradient>
+      </defs>
+      <path d="M50 116 L12 26 Q8 6 30 6 L70 6 Q92 6 88 26 Z" fill="url(#pg)" stroke="#fff" stroke-width="7" stroke-linejoin="round" />
+      <circle cx="50" cy="32" r="11" fill="#fff" opacity="0.9" />
+    </svg>
+  </div>
+
+  <div id="side">
+    <div id="card">
+      <div id="ribbon"></div>
+      <div id="cardImg"><span id="cardLetter"></span></div>
+      <div id="cardName"></div>
+    </div>
+    <div id="actions">
+      <button id="spinBtn" class="btn btn-spin" type="button"></button>
+      <button id="goBtn" class="btn btn-go" type="button" hidden><span id="goText"></span><b id="goCount"></b></button>
+      <button id="againBtn" class="btn btn-again" type="button" hidden></button>
+    </div>
+  </div>
+
+  <div id="msg" hidden><div class="msg-box"><div id="msgIcon"></div><h2 id="msgTitle"></h2><p id="msgText"></p><button id="msgBtn" class="btn btn-again" type="button" hidden></button></div></div>
+  <div id="toast" hidden></div>
+  <div id="corner"></div>
+  <div id="settingsRoot"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
