@@ -1,15 +1,31 @@
-// A fake QBooth Local API (v1) for testing without the real app (from QBooth Avatar's mock).
-// Same reply shapes and page / phase names as md_files/LOCAL_API.md in the QBooth repo.
+// A fake booth app Local API (API 1.1) for testing without the real app (from the Avatar's mock).
+// Same reply shapes and page / phase names as the booth app's Local API (README: Local API).
 // Flow: welcome -> templatePicker -> camera (3 shots) -> processing -> result -> welcome.
-// "mockEvent" in config: an event of this PC whose templates (and so covers) the mock uses.
+// templates?covers=1 sends covers inline: the event's own (config "mockEvent" = an event folder,
+// see mock-event.js), else a drawn card per demo template.
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { listenRetry } from './listen.js';
 
 const DEMO = ['Neon Party', 'Retro 80s', 'Golden Hour', 'Comic Pop', 'Space Trip', 'Under the Sea', 'Royal Gala', 'Candy Land', 'Wild West', 'Cherry Blossom']
   .map((name, i) => ({ id: 'demo_' + (i + 1), name }));
 
+// a drawn cover for a template without one
+const HUES = [330, 20, 45, 200, 260, 170, 290, 0, 120, 345];
+function drawnCover(name, i) {
+  const h = HUES[i % HUES.length], letter = String(name || '?').trim().charAt(0).toUpperCase().replace(/[<&>]/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="hsl(${h},85%,62%)"/><stop offset="1" stop-color="hsl(${(h + 50) % 360},75%,42%)"/></linearGradient></defs>` +
+    `<rect width="400" height="400" fill="url(#g)"/><text x="200" y="265" font-family="Segoe UI,Arial" font-size="190" font-weight="700" fill="#fff" text-anchor="middle">${letter}</text></svg>`;
+  return { type: 'image/svg+xml', data: Buffer.from(svg) };
+}
+const coverJson = img => img && {
+  mime: img.type, width: 400, height: 400, video: false, hash: crypto.createHash('sha1').update(img.data).digest('hex').slice(0, 16),
+  data: `data:${img.type};base64,${img.data.toString('base64')}`,
+};
+
 export function startMock(port, password, { eventId = 'mock_EVENT', eventName = 'Mock Party', templates = DEMO, appName = 'QBooth (mock)' } = {}) {
-  const TEMPLATES = templates.map((t, i) => ({ id: t.id, name: t.name, index: i + 1 }));
+  const TEMPLATES = templates.map((t, i) => ({ id: t.id, name: t.name, index: i + 1, cover: t.cover || drawnCover(t.name, i) }));
   const s = {
     event: { id: eventId, name: eventName },
     page: 'welcome',
@@ -38,7 +54,7 @@ export function startMock(port, password, { eventId = 'mock_EVENT', eventName = 
   }
 
   const status = () => ({
-    app: { name: appName, version: '0.0.0', apiVersion: '1' },
+    app: { name: appName, version: '0.0.0', apiVersion: '1.1' },
     event: s.event, page: s.event ? s.page : 'none', session: s.session,
     camera: s.camera, result: s.result, busy: s.busy, available: available(),
   });
@@ -67,7 +83,7 @@ export function startMock(port, password, { eventId = 'mock_EVENT', eventName = 
   function handle(cmd, p) {
     if (cmd === 'status') return data(status());
     if (cmd === 'events') return data([{ id: eventId, name: eventName, archived: false, templateCount: TEMPLATES.length, running: !!s.event }]);
-    if (cmd === 'templates') return data(TEMPLATES.map(t => ({ ...t, onScreen: s.page === 'templatePicker', selected: false })));
+    if (cmd === 'templates') return data(TEMPLATES.map(t => ({ ...t, cover: p.covers && p.covers !== '0' ? coverJson(t.cover) : null, onScreen: s.page === 'templatePicker', selected: false })));
     if (cmd === 'categories') return data([]);
     if (!available().includes(cmd)) {
       if (s.busy.dialog) return fail('dialog_open', 409);

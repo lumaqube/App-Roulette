@@ -6,7 +6,7 @@ const T = {
   en: {
     title: 'Settings', tabBooth: 'Booth', tabWheel: 'Wheel', tabSound: 'Sound', tabScreen: 'Screen', tabSecurity: 'Security',
     host: 'Address', port: 'Local API port', password: 'Local API password', kept: 'saved (leave empty to keep)',
-    test: 'Test connection', testing: 'Testing…', ok: '✓ Connected', noEvent: 'no event running', dir: 'Booth app folder', dirHint: 'Empty = found automatically (the QBooth.exe, BleepShare.exe or XBooth.exe in use). Template covers are read from here (read only).', brandName: 'Brand name', brandHint: 'Empty = the name the booth app reports (Q-Booth, BleepShareAI, XBooth). Shown to guests and in these settings.',
+    test: 'Test connection', testing: 'Testing…', ok: '✓ Connected', noEvent: 'no event running', brandName: 'Brand name', brandHint: 'Empty = the name the booth app reports (Q-Booth, BleepShareAI, XBooth). Shown to guests and in these settings.',
     boothHint: '{booth}: Settings → Advanced → Local API (Expert mode): switch it on, then copy its port and password here. Works with QBooth.exe, BleepShare.exe and XBooth.exe.',
     language: 'Language', titleText: 'Title', titleHint: 'Empty = "Spin the Wheel!" in the chosen language',
     autoGo: 'Auto-continue after (s)', autoGoHint: '0 = wait for the guest to tap "Let\'s go!"', respins: 'Spins again allowed', maxSeg: 'Most segments on the wheel', maxSegHint: 'More templates than this: a random set for each guest',
@@ -28,7 +28,7 @@ const T = {
   id: {
     title: 'Pengaturan', tabBooth: 'Booth', tabWheel: 'Roda', tabSound: 'Suara', tabScreen: 'Layar', tabSecurity: 'Keamanan',
     host: 'Alamat', port: 'Port Local API', password: 'Password Local API', kept: 'tersimpan (kosongkan = tetap)',
-    test: 'Tes koneksi', testing: 'Mengetes…', ok: '✓ Terhubung', noEvent: 'belum ada event berjalan', dir: 'Folder aplikasi booth', dirHint: 'Kosong = dicari otomatis (QBooth.exe, BleepShare.exe atau XBooth.exe yang sedang dipakai). Cover template dibaca dari sini (hanya dibaca).', brandName: 'Nama brand', brandHint: 'Kosong = nama dari aplikasi booth (Q-Booth, BleepShareAI, XBooth). Tampil ke tamu dan di pengaturan ini.',
+    test: 'Tes koneksi', testing: 'Mengetes…', ok: '✓ Terhubung', noEvent: 'belum ada event berjalan', brandName: 'Nama brand', brandHint: 'Kosong = nama dari aplikasi booth (Q-Booth, BleepShareAI, XBooth). Tampil ke tamu dan di pengaturan ini.',
     boothHint: 'Di {booth}: Settings → Advanced → Local API (mode Expert): nyalakan, lalu salin port dan password-nya ke sini. Bisa untuk QBooth.exe, BleepShare.exe dan XBooth.exe.',
     language: 'Bahasa', titleText: 'Judul', titleHint: 'Kosong = "Putar Rodanya!" sesuai bahasa',
     autoGo: 'Lanjut otomatis setelah (detik)', autoGoHint: '0 = tunggu tamu menekan "Ayo foto!"', respins: 'Boleh putar lagi', maxSeg: 'Segmen maksimal di roda', maxSegHint: 'Kalau template lebih banyak: diambil acak untuk tiap tamu',
@@ -50,7 +50,7 @@ const T = {
   zh: {
     title: '设置', tabBooth: '拍照亭', tabWheel: '转盘', tabSound: '声音', tabScreen: '屏幕', tabSecurity: '安全',
     host: '地址', port: 'Local API 端口', password: 'Local API 密码', kept: '已保存（留空则不变）',
-    test: '测试连接', testing: '测试中…', ok: '✓ 已连接', noEvent: '没有正在运行的活动', dir: '拍照亭应用文件夹', dirHint: '留空 = 自动查找（正在使用的 QBooth.exe、BleepShare.exe 或 XBooth.exe）。从这里读取模板封面（只读）。', brandName: '品牌名称', brandHint: '留空 = 拍照亭应用报告的名称（Q-Booth、BleepShareAI、XBooth）。显示给客人和本设置。',
+    test: '测试连接', testing: '测试中…', ok: '✓ 已连接', noEvent: '没有正在运行的活动', brandName: '品牌名称', brandHint: '留空 = 拍照亭应用报告的名称（Q-Booth、BleepShareAI、XBooth）。显示给客人和本设置。',
     boothHint: '在 {booth} 中：Settings → Advanced → Local API（Expert 模式）：打开，然后把端口和密码复制到这里。适用于 QBooth.exe、BleepShare.exe 和 XBooth.exe。',
     language: '语言', titleText: '标题', titleHint: '留空 = 所选语言的“转动幸运轮！”',
     autoGo: '自动继续（秒）', autoGoHint: '0 = 等客人点“开始拍照！”', respins: '可再转次数', maxSeg: '转盘最多格数', maxSegHint: '模板更多时：每位客人随机抽一组',
@@ -164,7 +164,6 @@ export function initSettings({ lang, locked, desktop }) {
         el('small', { className: 'set-note', textContent: t.boothHint }),
         row(t.host, host), row(t.port, port), row(t.password, pass),
         el('div', { className: 'set-row' }, el('span'), el('div', { className: 'set-inline' }, testBtn, testMsg)),
-        row(t.dir, text('qboothDir'), t.dirHint),
         row(t.brandName, text('brandName'), t.brandHint),
         row(t.mock, check('mock'), t.mockHint)),
       section(t.tabWheel,

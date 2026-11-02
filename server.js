@@ -1,5 +1,5 @@
 // QBooth Roulette: the page server. Polls Q-Booth's Local API (the password stays here),
-// serves the wheel page, the template covers (read from Q-Booth's event folder) and the
+// serves the wheel page, the template covers (from the Local API, covers=1) and the
 // settings, and hands the winning template to Q-Booth (template/select).
 //   node server.js          -> the real Q-Booth (config.json)
 //   node server.js --mock   -> a built-in fake booth (port 8749)
@@ -11,8 +11,9 @@ import { fileURLToPath } from 'node:url';
 import { loadConfig, loadOwnConfig, configWritePath } from './config.js';
 import { listenRetry } from './listen.js';
 import { startMock } from './mock-qbooth.js';
-import { coverOf, savedTemplates } from './covers.js';
-import { locateBooth, resolveBoothDir, brandName } from './locate.js';
+import { createCovers } from './covers.js';
+import { readEventFolder } from './mock-event.js';
+import { locateBooth, brandName } from './locate.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, 'public');
@@ -30,11 +31,11 @@ export function setAppHooks(h) { app = { ...app, ...h }; }
 
 // ---- Q-Booth ----
 let booth = { host: '127.0.0.1', port: 8730, password: '' };
-async function qb(method, cmd, body, conn = booth) {
+async function qb(method, cmd, body, conn = booth, timeoutMs = 4000) {
   try {
     const r = await fetch(`http://${conn.host}:${conn.port}/api/v1/${cmd}`, {
       method, headers: { Authorization: 'Bearer ' + conn.password, 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(4000),
+      body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(timeoutMs),
     });
     const j = await r.json().catch(() => ({ ok: false, error: { code: 'bad_reply' } }));
     return j.ok ? j : { ok: false, error: j.error || { code: 'http_' + r.status } };
@@ -46,6 +47,7 @@ async function qb(method, cmd, body, conn = booth) {
 // What the page and the window need to know, refreshed every pollMs.
 const state = { online: false, error: null, status: null, eventId: null, eventName: '', templates: [], handing: null, hidden: false, peek: false, mode: null };
 let templatesAt = 0;
+const covers = createCovers((cmd, ms) => qb('GET', cmd, null, booth, ms));
 
 // The booth app: brand builds QBooth.exe / BleepShare.exe / XBooth.exe. Its name comes from the
 // Local API (status.app.name), its pid and folder from the process on the Local API port.
@@ -56,7 +58,6 @@ async function relocate() {
   try { located = await locateBooth(booth.host, booth.port); locatedAt = Date.now(); if (located) console.log(`booth app: ${located.exe} (pid ${located.pid})`); }
   finally { locating = false; }
 }
-const boothDir = () => resolveBoothDir(cfg.qboothDir, located);
 const brand = () => cfg.brandName || lastBrand || null;
 export const boothPid = () => located?.pid || null;
 
@@ -71,6 +72,8 @@ async function poll() {
       templatesAt = Date.now();
       const t = eventId ? await qb('GET', 'templates') : null;
       state.templates = t?.ok ? t.data.map(x => ({ id: x.id, name: x.name })) : eventId === state.eventId ? state.templates : [];
+      const key = state.templates.map(x => x.id + ':' + x.name).join('|');
+      if (key !== covers.key) { covers.forget(); covers.key = key; }
     }
     const b = brandName(s.app?.name);
     if (b) lastBrand = b;
@@ -129,7 +132,7 @@ async function handOver(id) {
 // ---- settings ----
 const FIELDS = {
   language: 'enum:id,en,zh', title: 'string', 'qbooth.host': 'string', 'qbooth.port': 'int', 'qbooth.password': 'secret',
-  qboothDir: 'string', brandName: 'string', mockBrand: 'string*', overlay: 'bool*', display: 'int*', autoGoSec: 'int', respins: 'int', maxSegments: 'int',
+  brandName: 'string', mockBrand: 'string*', overlay: 'bool*', display: 'int*', autoGoSec: 'int', respins: 'int', maxSegments: 'int',
   bgmVolume: 'int', sfxVolume: 'int', settingsPin: 'secret', mock: 'bool*', mockEvent: 'string*',
   menuButton: 'bool', menuCorner: 'enum:top-right,top-left,bottom-right,bottom-left',
 };
@@ -140,7 +143,7 @@ const pinOk = pin => !cfg.settingsPin || String(pin || '') === String(cfg.settin
 function readSettings() {
   const values = {};
   for (const [k, type] of Object.entries(FIELDS)) if (!type.startsWith('secret')) values[k] = get(cfg, k);
-  return { values, has: { password: !!cfg.qbooth?.password, settingsPin: !!cfg.settingsPin }, file: configWritePath(), displays: app.displays, desktop: app.desktop, brand: brand(), boothDir: boothDir() };
+  return { values, has: { password: !!cfg.qbooth?.password, settingsPin: !!cfg.settingsPin }, file: configWritePath(), displays: app.displays, desktop: app.desktop, brand: brand() };
 }
 
 function saveSettings(changes) {
@@ -186,7 +189,7 @@ async function route(req, res) {
     });
   }
   if (p.startsWith('/cover/')) {
-    const c = state.eventId && coverOf(boothDir(), state.eventId, decodeURIComponent(p.slice(7)));
+    const c = state.eventId && await covers.get(decodeURIComponent(p.slice(7)));
     if (!c) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { 'Content-Type': c.type, 'Cache-Control': 'max-age=300' });
     return res.end(c.data);
@@ -241,9 +244,10 @@ export async function startServer({ mock } = {}) {
   MOCK = mock ?? !!cfg.mock;
   booth = { ...cfg.qbooth };
   if (MOCK) {
-    const real = cfg.mockEvent && savedTemplates(resolveBoothDir(cfg.qboothDir, null), cfg.mockEvent);
+    // mockEvent: a folder with an event.json (an extracted .qevent, a copy of an event): the mock plays it
+    const ev = cfg.mockEvent ? readEventFolder(cfg.mockEvent) : null;
     booth = { host: '127.0.0.1', port: 8749, password: 'mock' };
-    listening.push(await startMock(booth.port, booth.password, { appName: (cfg.mockBrand || 'QBooth') + ' (mock)', ...(real?.length ? { eventId: cfg.mockEvent, eventName: cfg.mockEvent, templates: real } : {}) }));
+    listening.push(await startMock(booth.port, booth.password, { appName: (cfg.mockBrand || 'QBooth') + ' (mock)', ...(ev?.templates.length ? { eventId: ev.id, eventName: ev.name, templates: ev.templates } : {}) }));
   }
   const server = http.createServer((req, res) => route(req, res).catch(err => { console.error(err); try { sendJson(res, 500, { ok: false }); } catch { } }));
   try { await listenRetry(server, cfg.port); }

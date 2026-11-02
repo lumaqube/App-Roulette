@@ -32,16 +32,15 @@ brand of its own (app, window and exe are just "Roulette"):
 - every text that names the booth app says the connected one's name (`status.app.name` of the
   Local API; "QBooth" shown as "Q-Booth"), or the **Brand name** setting, or before any contact a
   neutral word ("the booth app" / "aplikasi booth" / "拍照亭应用");
-- the booth app is found by the process listening on the Local API port (`locate.js`): its pid
-  (to raise its event window) and its folder (covers). The usual folders (C:\QBoothPro,
-  C:\QBoothAIV5, C:\BleepShareV5, C:\XBoothV5) are only a fallback; **Booth app folder** overrides.
+- the booth app is found by the process listening on the Local API port (`locate.js`): its pid,
+  to raise its event window. Nothing is read from its folder.
 
 ## Covers
 
-The Local API has no images. The covers are read (read only) from the booth app's own event folder
-on this PC: `<qboothDir>\events\<eventId>\event.json` → `templates[].cover`, or else the template
-file's own preview (`event_info.preview_image[0]`). A booth on another PC (Allow LAN): coloured
-placeholders with the first letter instead.
+From the booth app's Local API (API 1.1, the booth app after 5.9.2.0): `templates?covers=1` sends
+every cover inline, at the size the booth's own picker shows it (`covers.js`). Read once per
+template list and kept in memory; the page asks `/cover/<templateId>`. Works the same for a booth on
+another PC. A booth app with API 1.0 sends no covers: coloured placeholders with the first letter.
 
 ## The window
 
@@ -75,7 +74,8 @@ placeholders with the first letter instead.
 - `npm run build` → `dist\Roulette-win32-x64\Roulette.exe`.
 - In the booth app: Settings → Advanced → Local API (Expert mode): on, note port and password; put them in
   the roulette's settings (Test connection).
-- Mock with real covers: `"mock": true, "mockEvent": "<an event id from C:\QBoothPro\events>"`.
+- Mock with real covers: `"mock": true, "mockEvent": "<a folder with an event.json>"` (an extracted
+  `.qevent`, or a copy of an event folder; `mock-event.js` reads it, only for the mock).
 
 ## Config (`config.json`, overrides `config.example.json`)
 
@@ -83,7 +83,6 @@ placeholders with the first letter instead.
 |---|---|---|
 | `port` | 3930 | page server (the mock booth uses 8749) |
 | `qbooth.host / port / password` | 127.0.0.1 / 8730 / "" | the booth app's Local API |
-| `qboothDir` | "" | the booth app folder for covers; empty = found automatically |
 | `brandName` | "" | the brand shown to guests; empty = the name the booth app reports |
 | `language`, `title` | en, "" | texts; own title (empty = "Spin the Wheel!") |
 | `overlay`, `display` | true, 0 | overlay on the booth app or a normal window; which screen |
@@ -91,7 +90,7 @@ placeholders with the first letter instead.
 | `bgmVolume`, `sfxVolume` | 60, 80 | 0-100 |
 | `menuButton`, `menuCorner` | false, top-right | the always-on-top ☰ button and its corner |
 | `settingsPin` | "" | protects the settings |
-| `mock`, `mockEvent`, `mockBrand` | false, "", QBooth | fake booth; an event whose templates it borrows; the product name it reports |
+| `mock`, `mockEvent`, `mockBrand` | false, "", QBooth | fake booth; an event folder whose templates and covers it plays; the product name it reports |
 
 `config.json` holds the Local API password: keep it out of git and screenshots.
 
@@ -101,7 +100,8 @@ placeholders with the first letter instead.
 |---|---|
 | `electron/main.js` | Window (overlay / normal), show / hide with the booth app's page, shortcuts |
 | `server.js` | Polls the Local API, `/state`, `/cover/<id>`, `/spin/go`, settings |
-| `covers.js` | Reads covers from the event folder (read only) |
+| `covers.js` | Template covers from the Local API (`templates?covers=1`), kept in memory |
+| `mock-event.js` | For the mock only: an event folder's templates and covers (`mockEvent`) |
 | `mock-qbooth.js` | Fake Local API that plays a whole session by itself |
 | `public/app.js` | Layout, states (idle / spin / won / handing / away), input, booth app state |
 | `public/wheel.js` | Canvas wheel: segments, covers, labels, rim bulbs, hub |
