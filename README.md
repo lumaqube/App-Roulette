@@ -71,7 +71,8 @@ another PC. A booth app with API 1.0 sends no covers: coloured placeholders with
 
 - `npm install`, then `npm run app` (`npm run app:mock` = with a built-in fake booth app).
 - `node server.js [--mock]` serves the page alone on http://127.0.0.1:3930 (browser test).
-- `npm run build` → `dist\Roulette-win32-x64\Roulette.exe`.
+- `npm run build` → `dist\Roulette-win32-x64\Roulette.exe`. A ready exe: the repo's **Releases** page
+  (unzip, run `Roulette.exe`).
 - In the booth app: Settings → Advanced → Local API (Expert mode): on, note port and password; put them in
   the roulette's settings (Test connection).
 - Mock with real covers: `"mock": true, "mockEvent": "<a folder with an event.json>"` (an extracted
